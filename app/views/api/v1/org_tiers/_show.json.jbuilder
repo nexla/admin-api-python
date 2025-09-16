@@ -1,0 +1,9 @@
+json.(org_tier,
+    :id,
+    :name,
+    :display_name,
+    :record_count_limit,
+    :record_count_limit_time,
+    :data_source_count_limit,
+    :trial_period_days
+)

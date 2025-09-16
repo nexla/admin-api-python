@@ -1,0 +1,1 @@
+json.array! @data_sources, partial: @api_root + 'data_sources/optimized', as: :data_source

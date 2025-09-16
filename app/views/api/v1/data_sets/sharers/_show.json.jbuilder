@@ -1,0 +1,7 @@
+json.id sharer[:id] if sharer.key?(:id)
+json.email sharer[:email] if sharer.key?(:email)
+json.org_id sharer[:org_id] if sharer.key?(:org_id)
+json.team sharer[:team_id] if sharer.key?(:team_id)
+json.team_id sharer[:team_id] if sharer.key?(:team_id)
+json.created_at sharer[:created_at] if sharer.key?(:created_at)
+json.notified_at sharer[:notified_at] if sharer.key?(:notified_at)

@@ -1,0 +1,2 @@
+class SchemaMigration < ApplicationRecord
+end

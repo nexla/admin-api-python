@@ -1,0 +1,1 @@
+json.partial! @api_root + "marketplace/domains/custodians", custodians: @custodians

@@ -1,0 +1,1 @@
+json.partial! @api_root + "data_sets/show_with_catalog_ref", data_set: @data_set

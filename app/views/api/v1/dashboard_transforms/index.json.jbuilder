@@ -1,0 +1,1 @@
+json.array! @dashboard_transform, partial: @api_root + "dashboard_transforms/show", as: :dashboard_transform

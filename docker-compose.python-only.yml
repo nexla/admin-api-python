@@ -1,0 +1,162 @@
+version: "3.8"
+
+services:
+  # Pure MySQL Database - just the data layer
+  mysql:
+    image: mysql:8.0.30
+    container_name: admin_api_python_mysql
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: nexla123
+      MYSQL_DATABASE: nexla_admin_dev
+      MYSQL_USER: admin_user
+      MYSQL_PASSWORD: admin123
+    ports:
+      - "3306:3306"
+    volumes:
+      # Persistent data only - no Rails-specific configs
+      - mysql_data:/var/lib/mysql
+      # Custom Python-oriented init only
+      - ./python-setup/mysql-python-init.sql:/docker-entrypoint-initdb.d/01-python-init.sql:ro
+    networks:
+      - python-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pnexla123"]
+      timeout: 20s
+      retries: 10
+
+  # Redis for Python applications (Celery, caching)
+  redis:
+    image: redis:7-alpine
+    container_name: admin_api_python_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - python-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Elasticsearch for search (Python-managed)
+  elasticsearch:
+    image: elasticsearch:8.11.1
+    container_name: admin_api_python_elasticsearch
+    restart: unless-stopped
+    environment:
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "bootstrap.memory_lock=true"
+      - "discovery.type=single-node"
+      - "xpack.security.enabled=false"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - python-network
+
+  # FastAPI Application (Pure Python)
+  fastapi-app:
+    build:
+      context: .
+      dockerfile: python-stack.Dockerfile
+    container_name: admin_api_python_fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:nexla123@mysql:3306/nexla_admin_dev
+      - REDIS_URL=redis://redis:6379/0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - DEBUG=true
+      - PYTHONPATH=/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app:ro
+      - ./alembic:/app/alembic:ro
+      - ./alembic.ini:/app/alembic.ini:ro
+      - ./python-setup:/app/python-setup:ro
+    networks:
+      - python-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Celery Worker (Python background jobs)
+  celery-worker:
+    build:
+      context: .
+      dockerfile: python-stack.Dockerfile
+    container_name: admin_api_python_celery
+    command: celery -A app.celery_app worker --loglevel=info
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:nexla123@mysql:3306/nexla_admin_dev
+      - REDIS_URL=redis://redis:6379/0
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - PYTHONPATH=/app
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - ./app:/app/app:ro
+      - ./python-setup:/app/python-setup:ro
+    networks:
+      - python-network
+
+  # Celery Beat (Python scheduled jobs)
+  celery-beat:
+    build:
+      context: .
+      dockerfile: python-stack.Dockerfile
+    container_name: admin_api_python_celery_beat
+    command: celery -A app.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:nexla123@mysql:3306/nexla_admin_dev
+      - REDIS_URL=redis://redis:6379/0
+      - PYTHONPATH=/app
+    depends_on:
+      - mysql
+      - redis
+    volumes:
+      - ./app:/app/app:ro
+      - ./python-setup:/app/python-setup:ro
+    networks:
+      - python-network
+
+  # Database Admin (optional)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: admin_api_python_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: nexla123
+    ports:
+      - "8081:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - python-network
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+
+networks:
+  python-network:
+    driver: bridge

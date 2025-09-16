@@ -1,0 +1,1 @@
+json.partial! @api_root + "marketplace/marketplace_items/show", marketplace_item: @marketplace_item

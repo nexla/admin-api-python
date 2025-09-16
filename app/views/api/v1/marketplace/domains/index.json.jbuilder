@@ -1,0 +1,1 @@
+json.array! @domains, partial: @api_root + 'marketplace/domains/show', as: :domain

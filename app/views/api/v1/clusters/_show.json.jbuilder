@@ -1,0 +1,14 @@
+json.(cluster, 
+  :id,
+  :org_id,
+  :uid,
+  :is_default,
+  :is_private,
+  :name,
+  :description,
+  :status,
+  :region,
+  :provider,
+  :updated_at,
+  :created_at
+)
