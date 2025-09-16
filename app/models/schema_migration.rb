@@ -1,2 +1,0 @@
-class SchemaMigration < ApplicationRecord
-end

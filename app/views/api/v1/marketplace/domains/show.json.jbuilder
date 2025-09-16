@@ -1,1 +1,0 @@
-json.partial! @api_root + "marketplace/domains/show", domain: @domain

@@ -1,1 +1,0 @@
-json.partial! @api_root + "projects/show", project: @project

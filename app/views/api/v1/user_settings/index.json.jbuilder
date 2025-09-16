@@ -1,1 +1,0 @@
-json.array! @user_settings, partial: @api_root + "user_settings/show", as: :user_setting

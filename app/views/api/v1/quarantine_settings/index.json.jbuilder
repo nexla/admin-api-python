@@ -1,1 +1,0 @@
-json.array! @quarantine_setting, partial: @api_root + "quarantine_settings/show", as: :quarantine_setting

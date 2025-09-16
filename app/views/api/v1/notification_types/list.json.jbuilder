@@ -1,1 +1,0 @@
-json.partial! @api_root + "notification_types/show", notification_type: @notification_type

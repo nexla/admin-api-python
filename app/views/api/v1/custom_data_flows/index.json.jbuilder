@@ -1,1 +1,0 @@
-json.array! @custom_data_flows, partial: @api_root + "custom_data_flows/show", as: :custom_data_flow

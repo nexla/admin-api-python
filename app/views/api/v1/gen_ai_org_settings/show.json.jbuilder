@@ -1,1 +1,0 @@
-json.partial! partial: @api_root + 'gen_ai_org_settings/show', gen_ai_org_setting: @gen_ai_org_setting

@@ -2,7 +2,7 @@
 """
 Generate SQLAlchemy models from existing MySQL database.
 This script connects to your existing database and auto-generates
-Python models to replace Rails ActiveRecord models.
+Python models for the FastAPI application.
 """
 
 import os

@@ -1,1 +1,0 @@
-json.(self_signup_blocked_domain, :id, :domain)

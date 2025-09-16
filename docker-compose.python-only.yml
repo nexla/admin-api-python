@@ -15,7 +15,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      # Persistent data only - no Rails-specific configs
+      # Persistent data for Python application
       - mysql_data:/var/lib/mysql
       # Custom Python-oriented init only
       - ./python-setup/mysql-python-init.sql:/docker-entrypoint-initdb.d/01-python-init.sql:ro

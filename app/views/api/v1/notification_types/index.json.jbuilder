@@ -1,1 +1,0 @@
-json.array! @notification_type, partial: @api_root + 'notification_types/show', as: :notification_type
