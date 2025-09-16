@@ -1,15 +1,20 @@
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from datetime import datetime
 import json
+
 from ..database import get_db
 from ..auth import get_current_user
+from ..auth.rbac import RBACService, SystemPermissions
 from ..models.user import User
 from ..models.data_source import DataSource
 from ..models.org import Org
+from ..services.audit_service import AuditService
+from ..services.validation_service import ValidationService
+from ..services.async_tasks.manager import AsyncTaskManager
 
 router = APIRouter()
 
@@ -22,6 +27,29 @@ class DataSourceCreate(BaseModel):
     is_active: bool = True
     schedule_config: Optional[dict] = None
     data_credentials_id: Optional[int] = None
+    
+    @validator('name')
+    def validate_name(cls, v):
+        result = ValidationService.validate_name(v, min_length=2, max_length=100)
+        if not result['valid']:
+            raise ValueError(f"Invalid name: {'; '.join(result['errors'])}")
+        return result['name']
+    
+    @validator('config')
+    def validate_config(cls, v):
+        result = ValidationService.validate_json_config(v)
+        if not result['valid']:
+            raise ValueError(f"Invalid config: {'; '.join(result['errors'])}")
+        return result['config']
+    
+    @validator('tags')
+    def validate_tags(cls, v):
+        if v:
+            result = ValidationService.validate_tags(v)
+            if not result['valid']:
+                raise ValueError(f"Invalid tags: {'; '.join(result['errors'])}")
+            return result['tags']
+        return v or []
 
 class DataSourceUpdate(BaseModel):
     name: Optional[str] = None
@@ -107,11 +135,45 @@ class DataSourceSummaryResponse(BaseModel):
 
 @router.get("/", response_model=List[DataSourceResponse])
 async def list_data_sources(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, le=1000),
+    connection_type: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    active_only: bool = Query(True),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """List data sources."""
-    data_sources = db.query(DataSource).filter(DataSource.owner_id == current_user.id).all()
+    """List data sources with proper authorization."""
+    # Check read permissions
+    if not RBACService.has_permission(current_user, SystemPermissions.DATA_SOURCE_READ, db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions to list data sources"
+        )
+    
+    # Start with user's accessible data sources
+    query = db.query(DataSource)
+    
+    # Non-admin users can only see their own or shared data sources
+    if not RBACService.has_permission(current_user, SystemPermissions.DATA_SOURCE_ADMIN, db):
+        query = query.filter(
+            or_(
+                DataSource.owner_id == current_user.id,
+                # TODO: Add shared data source filtering when relationships are active
+            )
+        )
+    
+    # Apply filters
+    if connection_type:
+        query = query.filter(DataSource.connection_type == connection_type)
+    
+    if status:
+        query = query.filter(DataSource.status == status)
+    
+    if active_only:
+        query = query.filter(DataSource.is_active == True)
+    
+    data_sources = query.offset(skip).limit(limit).all()
     return data_sources
 
 @router.get("/all", response_model=List[DataSourceResponse])
@@ -164,25 +226,51 @@ async def get_data_source(
 @router.post("/", response_model=DataSourceResponse, status_code=status.HTTP_201_CREATED)
 async def create_data_source(
     data_source_data: DataSourceCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Create a new data source."""
+    # Check write permissions
+    if not RBACService.has_permission(current_user, SystemPermissions.DATA_SOURCE_WRITE, db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions to create data sources"
+        )
+    
     try:
-        # Use Rails model factory method
-        api_user_info = {
-            'input_owner': current_user,
-            'input_org': db.query(Org).filter(Org.id == current_user.default_org_id).first() if current_user.default_org_id else None
-        }
-        
-        input_data = data_source_data.dict()
-        input_data['connection_type'] = data_source_data.connection_type
-        
-        db_data_source = DataSource.build_from_input(api_user_info, input_data)
+        # Create data source
+        db_data_source = DataSource(
+            name=data_source_data.name,
+            description=data_source_data.description,
+            connection_type=data_source_data.connection_type,
+            config=data_source_data.config,
+            tags=data_source_data.tags,
+            is_active=data_source_data.is_active,
+            schedule_config=data_source_data.schedule_config,
+            data_credentials_id=data_source_data.data_credentials_id,
+            owner_id=current_user.id,
+            org_id=current_user.default_org_id,
+            status="ACTIVE",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
         
         db.add(db_data_source)
         db.commit()
         db.refresh(db_data_source)
+        
+        # Log the action
+        AuditService.log_action(
+            db=db,
+            user_id=current_user.id,
+            action="create",
+            resource_type="data_source",
+            resource_id=db_data_source.id,
+            resource_name=db_data_source.name,
+            new_values=data_source_data.dict(),
+            request=request
+        )
         
         return db_data_source
     except Exception as e:

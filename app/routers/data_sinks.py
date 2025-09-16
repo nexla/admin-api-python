@@ -1,15 +1,19 @@
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from datetime import datetime
 import json
+
 from ..database import get_db
 from ..auth import get_current_user
+from ..auth.rbac import RBACService, SystemPermissions
 from ..models.user import User
 from ..models.data_sink import DataSink
 from ..models.org import Org
+from ..services.audit_service import AuditService
+from ..services.validation_service import ValidationService
 
 router = APIRouter()
 
@@ -22,6 +26,20 @@ class DataSinkCreate(BaseModel):
     is_active: bool = True
     schedule_config: Optional[dict] = None
     data_credentials_id: Optional[int] = None
+    
+    @validator('name')
+    def validate_name(cls, v):
+        result = ValidationService.validate_name(v, min_length=2, max_length=100)
+        if not result['valid']:
+            raise ValueError(f"Invalid name: {'; '.join(result['errors'])}")
+        return result['name']
+    
+    @validator('config')
+    def validate_config(cls, v):
+        result = ValidationService.validate_json_config(v)
+        if not result['valid']:
+            raise ValueError(f"Invalid config: {'; '.join(result['errors'])}")
+        return result['config']
 
 class DataSinkUpdate(BaseModel):
     name: Optional[str] = None
