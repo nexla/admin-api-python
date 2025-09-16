@@ -341,6 +341,27 @@ class AuditService:
         except Exception as e:
             logger.error(f"Failed to get security events: {str(e)}")
             return []
+    
+    @staticmethod
+    def log_user_action(
+        db: Session,
+        performing_user: User,
+        action: str,
+        details: Optional[Dict[str, Any]] = None,
+        target_user_id: Optional[int] = None,
+        request: Optional[Request] = None
+    ):
+        """Convenience method for logging user-related actions"""
+        return AuditService.log_action(
+            db=db,
+            user_id=performing_user.id,
+            action=action,
+            resource_type="user",
+            resource_id=target_user_id,
+            details=details,
+            request=request,
+            risk_level="medium" if action in ["password_changed", "account_locked"] else "low"
+        )
 
 
 class SecurityEventTypes:
@@ -408,3 +429,13 @@ class AuditActions:
     UNLOCK = "unlock"
     GRANT_PERMISSION = "grant_permission"
     REVOKE_PERMISSION = "revoke_permission"
+    
+    # User management actions
+    USER_CREATED = "user_created"
+    USER_UPDATED = "user_updated"
+    USER_DEACTIVATED = "user_deactivated"
+    USER_ACTIVATED = "user_activated"
+    PASSWORD_CHANGED = "password_changed"
+    ACCOUNT_LOCKED = "account_locked"
+    ACCOUNT_UNLOCKED = "account_unlocked"
+    

@@ -217,6 +217,51 @@ class AsyncTaskManager:
             db.rollback()
         finally:
             db.close()
+    
+    @staticmethod
+    def create_task(
+        db: Session,
+        task_type: str,
+        arguments: Dict[str, Any],
+        owner_id: int,
+        description: Optional[str] = None
+    ) -> AsyncTask:
+        """
+        Create a new async task.
+        
+        Args:
+            db: Database session
+            task_type: Type of task to create
+            arguments: Task arguments
+            owner_id: ID of the user creating the task
+            description: Optional task description
+            
+        Returns:
+            Created AsyncTask instance
+        """
+        try:
+            task = AsyncTask(
+                task_type=task_type,
+                arguments=arguments,
+                owner_id=owner_id,
+                description=description or f"{task_type} task",
+                status=TaskStatus.PENDING,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+                progress=0
+            )
+            
+            db.add(task)
+            db.commit()
+            db.refresh(task)
+            
+            logger.info(f"Created task {task.id} of type {task_type} for user {owner_id}")
+            return task
+            
+        except Exception as e:
+            logger.error(f"Failed to create task: {str(e)}")
+            db.rollback()
+            raise
 
 
 class TaskRegistry:

@@ -85,16 +85,18 @@ class ValidationService:
         return {"valid": True, "name": name, "errors": []}
     
     @staticmethod
-    def validate_password(password: str) -> Dict[str, Any]:
-        """Validate password strength"""
+    def validate_password(email: str, full_name: str, password: str) -> Dict[str, Any]:
+        """Validate password strength with context"""
         if not password:
-            return {"valid": False, "errors": ["Password is required"]}
+            return {"valid": False, "message": "Password is required", "errors": ["Password is required"]}
         
         errors = []
         
+        # Basic length requirement
         if len(password) < 8:
             errors.append("Password must be at least 8 characters long")
         
+        # Character requirements
         if not re.search(r'[a-z]', password):
             errors.append("Password must contain at least one lowercase letter")
         
@@ -107,7 +109,72 @@ class ValidationService:
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
             errors.append("Password must contain at least one special character")
         
-        return {"valid": len(errors) == 0, "errors": errors}
+        # Context-based validation
+        if email and email.lower() in password.lower():
+            errors.append("Password should not contain your email address")
+        
+        if full_name and len(full_name) > 2:
+            name_parts = full_name.lower().split()
+            for part in name_parts:
+                if len(part) > 2 and part in password.lower():
+                    errors.append("Password should not contain parts of your name")
+                    break
+        
+        # Common weak passwords
+        weak_passwords = ['password', '12345678', 'qwerty123', 'admin123', 'letmein']
+        if password.lower() in weak_passwords:
+            errors.append("Password is too common, please choose a stronger password")
+        
+        # Calculate entropy score
+        entropy_score = ValidationService._calculate_password_entropy(password)
+        
+        is_valid = len(errors) == 0
+        message = "Password is strong" if is_valid else "; ".join(errors)
+        
+        return {
+            "valid": is_valid, 
+            "message": message,
+            "errors": errors,
+            "entropy_score": entropy_score,
+            "strength": ValidationService._get_password_strength(entropy_score)
+        }
+    
+    @staticmethod
+    def _calculate_password_entropy(password: str) -> float:
+        """Calculate password entropy score"""
+        import math
+        
+        # Character set size based on what's actually in the password
+        charset_size = 0
+        if re.search(r'[a-z]', password):
+            charset_size += 26
+        if re.search(r'[A-Z]', password):
+            charset_size += 26
+        if re.search(r'\d', password):
+            charset_size += 10
+        if re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            charset_size += 32  # approximate special chars
+        
+        if charset_size == 0:
+            return 0
+        
+        # Entropy = log2(charset_size^length)
+        entropy = len(password) * math.log2(charset_size)
+        return round(entropy, 2)
+    
+    @staticmethod
+    def _get_password_strength(entropy_score: float) -> str:
+        """Get password strength label based on entropy"""
+        if entropy_score < 25:
+            return "Very Weak"
+        elif entropy_score < 35:
+            return "Weak"
+        elif entropy_score < 50:
+            return "Fair"
+        elif entropy_score < 75:
+            return "Good"
+        else:
+            return "Strong"
     
     @staticmethod
     def validate_tags(tags: Any) -> Dict[str, Any]:
