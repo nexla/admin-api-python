@@ -1318,3 +1318,87 @@ class User(Base):
             'default_org_id': self.default_org_id,
             'user_tier_id': self.user_tier_id
         }
+    
+    # Authorization Methods - Rails CanCan Equivalent
+    
+    def is_super_user_(self) -> bool:
+        """Check if user has super user privileges"""
+        return self.super_user_()
+    
+    def is_org_member_(self, org) -> bool:
+        """Check if user is a member of the given organization"""
+        if not org:
+            return False
+        
+        try:
+            from .org_membership import OrgMembership
+            from sqlalchemy.orm import sessionmaker
+            
+            Session = sessionmaker(bind=self.__table__.bind)
+            db = Session()
+            
+            membership = db.query(OrgMembership).filter(
+                OrgMembership.user_id == self.id,
+                OrgMembership.org_id == org.id,
+                OrgMembership.status == 'ACTIVE'
+            ).first()
+            
+            return membership is not None
+            
+        except Exception:
+            return False
+        finally:
+            if 'db' in locals():
+                db.close()
+    
+    def has_admin_access_(self, user) -> bool:
+        """Check if another user has admin access to this user"""
+        if not user:
+            return False
+        
+        # Super users can manage anyone
+        if user.is_super_user_():
+            return True
+        
+        # Users can manage themselves
+        if user.id == self.id:
+            return True
+        
+        # Org admins can manage members of their orgs
+        if hasattr(user, 'default_org') and user.default_org:
+            if self.is_org_member_(user.default_org):
+                return user.default_org.has_admin_access_(user)
+        
+        return False
+    
+    def has_operator_access_(self, user) -> bool:
+        """Check if another user has operator access to this user"""
+        if not user:
+            return False
+        
+        # Admin access includes operator access
+        if self.has_admin_access_(user):
+            return True
+        
+        # Org operators can operate on members of their orgs
+        if hasattr(user, 'default_org') and user.default_org:
+            if self.is_org_member_(user.default_org):
+                return user.default_org.has_operator_access_(user)
+        
+        return False
+    
+    def has_collaborator_access_(self, user) -> bool:
+        """Check if another user has collaborator access to this user"""
+        if not user:
+            return False
+        
+        # Operator access includes collaborator access
+        if self.has_operator_access_(user):
+            return True
+        
+        # Members of the same org have collaborator access
+        if hasattr(user, 'default_org') and user.default_org:
+            if self.is_org_member_(user.default_org):
+                return True
+        
+        return False
