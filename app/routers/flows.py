@@ -1,13 +1,22 @@
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, Query, File, UploadFile, BackgroundTasks, Request
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, Field
-from datetime import datetime
+from sqlalchemy import or_, and_
+from pydantic import BaseModel, Field, validator
+from datetime import datetime, timedelta
+import json
 
 from app.database import get_db
 from app.auth import get_current_user
+from app.auth.rbac import RBACService, SystemPermissions
 from app.models.user import User
 from app.models.flow_node import FlowNode
+from app.models.flow import Flow
+from app.models.org import Org
+from app.models.project import Project
+from app.services.audit_service import AuditService
+from app.services.validation_service import ValidationService
+from app.services.async_tasks.manager import AsyncTaskManager
 
 router = APIRouter()
 
@@ -89,6 +98,50 @@ class FlowScheduleUpdate(BaseModel):
     timezone: Optional[str] = Field("UTC")
     max_retries: Optional[int] = Field(3, ge=0, le=10)
     retry_delay: Optional[int] = Field(300, ge=60, le=3600)
+    
+    @validator('cron_expression')
+    def validate_cron(cls, v):
+        if v:
+            result = ValidationService.validate_cron_expression(v)
+            if not result['valid']:
+                raise ValueError(f"Invalid cron expression: {'; '.join(result['errors'])}")
+            return result['cron']
+        return v
+
+class FlowExecutionRequest(BaseModel):
+    priority: str = Field("medium", regex="^(low|medium|high|urgent)$")
+    parameters: Optional[Dict[str, Any]] = None
+    timeout_seconds: Optional[int] = Field(None, ge=60, le=86400)
+    retry_on_failure: bool = True
+    send_notifications: bool = True
+
+class FlowBulkAction(BaseModel):
+    flow_ids: List[int]
+    action: str = Field(..., regex="^(start|stop|pause|resume|delete)$")
+    force: bool = False
+
+class FlowMetricsResponse(BaseModel):
+    total_runs: int
+    successful_runs: int
+    failed_runs: int
+    avg_runtime_seconds: float
+    success_rate: float
+    last_24h_runs: int
+    last_7d_runs: int
+    error_rate: float
+    data_processed_mb: int
+    estimated_cost: float
+
+class FlowStatusResponse(BaseModel):
+    id: int
+    name: str
+    status: str
+    current_run_id: Optional[str] = None
+    progress_percentage: Optional[int] = None
+    estimated_completion: Optional[datetime] = None
+    runtime_seconds: Optional[int] = None
+    error_message: Optional[str] = None
+    last_heartbeat: Optional[datetime] = None
 
 # Core CRUD operations
 @router.get("/", response_model=List[FlowNodeResponse])
@@ -98,6 +151,8 @@ async def list_flows(
     project_id: Optional[int] = Query(None),
     status: Optional[str] = Query(None),
     flow_type: Optional[str] = Query(None),
+    active_only: bool = Query(False),
+    include_metrics: bool = Query(False),
     sort_by: str = Query("updated_at", regex="^(name|created_at|updated_at|last_run_at|status)$"),
     sort_order: str = Query("desc", regex="^(asc|desc)$"),
     db: Session = Depends(get_db),

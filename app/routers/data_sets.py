@@ -1,17 +1,22 @@
 from typing import List, Optional, Dict, Any, Union
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Body, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body, File, UploadFile, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from datetime import datetime
 import json
+
 from ..database import get_db
 from ..auth import get_current_user
+from ..auth.rbac import RBACService, SystemPermissions
 from ..models.user import User
 from ..models.data_set import DataSet
 from ..models.data_source import DataSource
 from ..models.data_sink import DataSink
 from ..models.org import Org
+from ..services.audit_service import AuditService
+from ..services.validation_service import ValidationService
+from ..services.async_tasks.manager import AsyncTaskManager
 
 router = APIRouter()
 
@@ -24,6 +29,24 @@ class DataSetCreate(BaseModel):
     output_schema: Optional[Dict[str, Any]] = None
     data_samples: Optional[List[Dict[str, Any]]] = []
     schedule_config: Optional[Dict[str, Any]] = None
+    public: bool = False
+    managed: bool = True
+    
+    @validator('name')
+    def validate_name(cls, v):
+        result = ValidationService.validate_name(v, min_length=2, max_length=100)
+        if not result['valid']:
+            raise ValueError(f"Invalid name: {'; '.join(result['errors'])}")
+        return result['name']
+    
+    @validator('tags')
+    def validate_tags(cls, v):
+        if v:
+            result = ValidationService.validate_tags(v)
+            if not result['valid']:
+                raise ValueError(f"Invalid tags: {'; '.join(result['errors'])}")
+            return result['tags']
+        return v or []
 
 class DataSetUpdate(BaseModel):
     name: Optional[str] = None
