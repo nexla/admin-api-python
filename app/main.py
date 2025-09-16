@@ -8,11 +8,20 @@ import os
 from .database import get_db
 from .config import settings
 from .auth import get_current_user
+from .middleware import (
+    RequestMetricsMiddleware,
+    RequestLoggingMiddleware, 
+    AuditLoggingMiddleware,
+    ErrorHandlingMiddleware,
+    SecurityHeadersMiddleware,
+    RateLimitingMiddleware
+)
 from .routers import (
     auth, users, orgs, projects, data_credentials,
     data_sources, data_sinks, data_sets, flows,
     search, flow_management, metrics, data_schemas, invites,
-    billing, custodians
+    billing, custodians, notifications, alerts, api_keys, probe, transforms, background_jobs, audit_logs,
+    marketplace, tags, approval_requests, validators, catalog, analytics, security
 )
 
 app = FastAPI(
@@ -22,6 +31,14 @@ app = FastAPI(
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None
 )
+
+# Add custom middleware
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(ErrorHandlingMiddleware) 
+app.add_middleware(AuditLoggingMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(RequestMetricsMiddleware)
+app.add_middleware(RateLimitingMiddleware, requests_per_minute=300)
 
 # CORS middleware
 app.add_middleware(
@@ -54,6 +71,24 @@ app.include_router(invites.router, prefix="/api/v1/invites", tags=["Invitations"
 # New Rails business logic routers  
 app.include_router(billing.router, prefix="/api/v1", tags=["Billing & Subscriptions"])
 app.include_router(custodians.router, prefix="/api/v1", tags=["Organization Custodians"])
+app.include_router(api_keys.router, prefix="/api/v1", tags=["API Keys"])
+app.include_router(notifications.router, prefix="/api/v1", tags=["Notifications"])
+app.include_router(alerts.router, prefix="/api/v1", tags=["Alerts"])
+app.include_router(probe.router, prefix="/api/v1", tags=["Data Source Probing"])
+app.include_router(transforms.router, prefix="/api/v1", tags=["Data Transformations"])
+app.include_router(background_jobs.router, prefix="/api/v1/background-jobs", tags=["Background Jobs"])
+app.include_router(audit_logs.router, prefix="/api/v1/audit-logs", tags=["Audit Logs"])
+
+# Phase 2 Enhanced API Endpoints
+app.include_router(marketplace.router, prefix="/api/v1/marketplace", tags=["Marketplace"])
+app.include_router(tags.router, prefix="/api/v1/tags", tags=["Tags"])
+app.include_router(approval_requests.router, prefix="/api/v1/approval-requests", tags=["Approval Requests"])
+app.include_router(validators.router, prefix="/api/v1/validators", tags=["Validation Rules"])
+app.include_router(catalog.router, prefix="/api/v1/catalog", tags=["Data Catalog"])
+
+# Phase 3 Advanced API Endpoints
+app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics & Metrics"])
+app.include_router(security.router, prefix="/api/v1/security", tags=["Security & RBAC"])
 
 @app.get("/")
 async def root():

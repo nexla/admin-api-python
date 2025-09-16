@@ -41,6 +41,43 @@ from .notification_channel_setting import NotificationChannelSetting
 from .billing_account import BillingAccount
 from .subscription import Subscription
 from .webhook import Webhook
+from .transform import Transform
+from .attribute_transform import AttributeTransform
+from .background_job import BackgroundJob, JobDependency
+from .audit_log_enhanced import AuditLogEnhanced, AuditAction, AuditSeverity
+from .marketplace_domain import MarketplaceDomain, DomainSubscription, DomainStats
+from .approval_request import ApprovalRequest, ApprovalAction, ApprovalComment
+from .tag import Tag, ResourceTag, TagCollection
+from .validation_rule import ValidationRule, ValidationResult, RuleExecution
+from .analytics import (
+    MetricDefinition, MetricValue, AlertRule, AlertInstance, 
+    AlertNotification, Dashboard, DashboardShare, AnalyticsReport, AnalyticsReportRun
+)
+from .security import (
+    SecurityRole, RoleAssignment, SecurityPolicy, PolicyBinding,
+    AccessControlEntry, SecurityAuditLog, SecurityRule, SecurityRuleViolation,
+    ThreatIntelligence, SecurityIncident, DataClassification as SecurityDataClassification
+)
+from .orchestration import (
+    Pipeline, PipelineNode, PipelineEdge, PipelineExecution, NodeExecution,
+    PipelineDependency, PipelineSchedule, PipelineAlert, DataLineage as OrchestrationDataLineage,
+    PipelineMetric, PipelineTemplate
+)
+from .ml_models import (
+    MLModel, MLExperiment, ExperimentTrial, ModelDeployment, ModelPrediction,
+    FeatureStore, Feature, ModelRegistry, AutoMLJob, ModelMonitor, ModelMonitorResult
+)
+from .reporting import (
+    Report, ReportExecution, Dashboard as ReportingDashboard, Widget, DashboardShare as ReportingDashboardShare,
+    ReportSubscription, ReportTemplate, DataVisualization, ReportingMetric,
+    AlertRule as ReportingAlertRule, AlertInstance as ReportingAlertInstance
+)
+from .governance import (
+    DataGovernancePolicy, DataClassification as GovernanceDataClassification, DataClassificationResult,
+    DataLineage as GovernanceDataLineage, PolicyViolation, ComplianceReport,
+    DataRetentionRule, RetentionExecution, DataPrivacyRequest,
+    DataQualityRule, DataQualityResult, GovernanceAuditLog
+)
 
 __all__ = [
     "User", "Org", "DataSource", "DataSet", "DataSink", 
@@ -49,5 +86,14 @@ __all__ = [
     "Vendor", "ServiceKey", "MarketplaceItem", "Cluster", "RateLimit",
     "ApiKey", "ApiKeyEvent", "Permission", "Session", "Team", "TeamInvitation", "TeamMembership",
     "UserLoginAudit", "OrgCustodian", "DomainCustodian", "NotificationChannelSetting", 
-    "BillingAccount", "Subscription", "Webhook"
+    "BillingAccount", "Subscription", "Webhook", "Transform", "AttributeTransform", "BackgroundJob", "JobDependency", "AuditLogEnhanced", "AuditAction", "AuditSeverity",
+    "MarketplaceDomain", "DomainSubscription", "DomainStats", "ApprovalRequest", "ApprovalAction", "ApprovalComment",
+    "Tag", "ResourceTag", "TagCollection", "ValidationRule", "ValidationResult", "RuleExecution",
+    # Phase 3 models
+    "MetricDefinition", "MetricValue", "AlertRule", "AlertInstance", "AlertNotification", "Dashboard", "DashboardShare", "AnalyticsReport", "AnalyticsReportRun",
+    "SecurityRole", "RoleAssignment", "SecurityPolicy", "PolicyBinding", "AccessControlEntry", "SecurityAuditLog", "SecurityRule", "SecurityRuleViolation", "ThreatIntelligence", "SecurityIncident", "SecurityDataClassification",
+    "Pipeline", "PipelineNode", "PipelineEdge", "PipelineExecution", "NodeExecution", "PipelineDependency", "PipelineSchedule", "PipelineAlert", "OrchestrationDataLineage", "PipelineMetric", "PipelineTemplate",
+    "MLModel", "MLExperiment", "ExperimentTrial", "ModelDeployment", "ModelPrediction", "FeatureStore", "Feature", "ModelRegistry", "AutoMLJob", "ModelMonitor", "ModelMonitorResult",
+    "Report", "ReportExecution", "ReportingDashboard", "Widget", "ReportingDashboardShare", "ReportSubscription", "ReportTemplate", "DataVisualization", "ReportingMetric", "ReportingAlertRule", "ReportingAlertInstance",
+    "DataGovernancePolicy", "GovernanceDataClassification", "DataClassificationResult", "GovernanceDataLineage", "PolicyViolation", "ComplianceReport", "DataRetentionRule", "RetentionExecution", "DataPrivacyRequest", "DataQualityRule", "DataQualityResult", "GovernanceAuditLog"
 ]

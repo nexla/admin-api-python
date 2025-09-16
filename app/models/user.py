@@ -72,6 +72,16 @@ class User(Base):
     
     flows = relationship("Flow", back_populates="owner")
     projects = relationship("Project", back_populates="owner")
+    created_transforms = relationship("Transform", back_populates="created_by")
+    background_jobs = relationship("BackgroundJob", back_populates="user", foreign_keys="BackgroundJob.user_id")
+    
+    # Phase 2 relationships
+    owned_marketplace_domains = relationship("MarketplaceDomain", back_populates="owner")
+    domain_subscriptions = relationship("DomainSubscription", back_populates="user")
+    created_approval_requests = relationship("ApprovalRequest", foreign_keys="ApprovalRequest.requester_id", back_populates="requester")
+    created_tags = relationship("Tag", back_populates="created_by")
+    created_validation_rules = relationship("ValidationRule", back_populates="created_by")
+    
     # teams = relationship("Team", secondary="team_members", back_populates="members")  # Disabled temporarily
     
     def is_active(self) -> bool:

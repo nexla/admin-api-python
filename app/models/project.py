@@ -90,6 +90,9 @@ class Project(Base):
     flow_nodes = relationship("FlowNode", back_populates="project")
     archived_by = relationship("User", foreign_keys=[archived_by_id])
     project_copies = relationship("Project", remote_side="Project.copied_from_id")
+    background_jobs = relationship("BackgroundJob", back_populates="project")
+    tags = relationship("Tag", back_populates="project")
+    validation_rules = relationship("ValidationRule", back_populates="project")
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

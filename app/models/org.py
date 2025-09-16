@@ -74,6 +74,18 @@ class Org(Base):
     billing_accounts = relationship("BillingAccount", back_populates="org")
     subscriptions = relationship("Subscription", back_populates="org")
     
+    # Transform relationships
+    transforms = relationship("Transform", back_populates="org")
+    
+    # Background job relationships
+    background_jobs = relationship("BackgroundJob", back_populates="org")
+    
+    # Phase 2 relationships
+    marketplace_domains = relationship("MarketplaceDomain", back_populates="org")
+    approval_requests = relationship("ApprovalRequest", back_populates="org")
+    tags = relationship("Tag", back_populates="org")
+    validation_rules = relationship("ValidationRule", back_populates="org")
+    
     @property
     def member_users(self) -> List:
         """Rails-style through relationship: Get users who are members of this org"""
