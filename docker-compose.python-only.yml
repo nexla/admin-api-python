@@ -83,7 +83,6 @@ services:
       - ./app:/app/app:ro
       - ./alembic:/app/alembic:ro
       - ./alembic.ini:/app/alembic.ini:ro
-      - ./python-setup:/app/python-setup:ro
     networks:
       - python-network
     healthcheck:
@@ -109,7 +108,6 @@ services:
       - redis
     volumes:
       - ./app:/app/app:ro
-      - ./python-setup:/app/python-setup:ro
     networks:
       - python-network
 
@@ -129,7 +127,6 @@ services:
       - redis
     volumes:
       - ./app:/app/app:ro
-      - ./python-setup:/app/python-setup:ro
     networks:
       - python-network
 
