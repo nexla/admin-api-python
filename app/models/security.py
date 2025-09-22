@@ -323,7 +323,7 @@ class ThreatIntelligence(Base):
     
     # Additional metadata
     tags = Column(JSON, default=list)
-    metadata = Column(JSON, default=dict)
+    security_metadata = Column(JSON, default=dict)
 
 class SecurityIncident(Base):
     __tablename__ = "security_incidents"

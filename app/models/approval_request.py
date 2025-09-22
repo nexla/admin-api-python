@@ -72,7 +72,7 @@ class ApprovalRequest(Base):
     estimated_duration = Column(Integer)  # Estimated access duration in hours
     
     # Request context
-    metadata = Column(JSON, default=dict)  # Additional request context
+    request_metadata = Column(JSON, default=dict)  # Additional request context
     business_context = Column(JSON)  # Business context and impact
     compliance_notes = Column(Text)  # Compliance considerations
     
@@ -253,16 +253,16 @@ class ApprovalRequest(Base):
         self.updated_at = datetime.now()
         
         # Add to metadata
-        if not self.metadata:
-            self.metadata = {}
+        if not self.request_metadata:
+            self.request_metadata = {}
         
-        extensions = self.metadata.get('deadline_extensions', [])
+        extensions = self.request_metadata.get('deadline_extensions', [])
         extensions.append({
             'new_deadline': new_deadline.isoformat(),
             'reason': reason,
             'extended_at': datetime.now().isoformat()
         })
-        self.metadata['deadline_extensions'] = extensions
+        self.request_metadata['deadline_extensions'] = extensions
     
     def add_comment_(self, user_id: int, comment: str, is_internal: bool = False) -> None:
         """Add a comment to the request"""
@@ -339,7 +339,7 @@ class ApprovalRequest(Base):
         
         if include_sensitive:
             result.update({
-                "metadata": self.metadata,
+                "metadata": self.request_metadata,
                 "business_context": self.business_context,
                 "auto_approve_conditions": self.auto_approve_conditions,
                 "escalation_rules": self.escalation_rules,
@@ -360,7 +360,7 @@ class ApprovalAction(Base):
     
     action_type = Column(String(50), nullable=False)  # approve, reject, cancel, escalate, comment
     comments = Column(Text)
-    metadata = Column(JSON)  # Additional action-specific data
+    action_metadata = Column(JSON)  # Additional action-specific data
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     

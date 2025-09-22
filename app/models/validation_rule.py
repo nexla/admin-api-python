@@ -99,7 +99,7 @@ class ValidationRule(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Metadata
-    metadata = Column(JSON, default=dict)
+    rule_metadata = Column(JSON, default=dict)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

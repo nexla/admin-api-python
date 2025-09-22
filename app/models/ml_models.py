@@ -380,7 +380,7 @@ class ModelRegistry(Base):
     
     # Tags and metadata
     tags = Column(JSON, default=dict)
-    metadata = Column(JSON, default=dict)
+    model_metadata = Column(JSON, default=dict)
     
     # Timestamps
     created_at = Column(DateTime, nullable=False, default=func.now())
