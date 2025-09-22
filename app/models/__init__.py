@@ -44,7 +44,7 @@ from .webhook import Webhook
 from .transform import Transform
 from .attribute_transform import AttributeTransform
 from .background_job import BackgroundJob, JobDependency
-from .audit_log_enhanced import AuditLogEnhanced, AuditAction, AuditSeverity
+from .audit_log import AuditLog, AuditAction, AuditSeverity
 from .marketplace_domain import MarketplaceDomain, DomainSubscription, DomainStats
 from .approval_request import ApprovalRequest, ApprovalAction, ApprovalComment
 from .tag import Tag, ResourceTag, TagCollection
@@ -86,7 +86,7 @@ __all__ = [
     "Vendor", "ServiceKey", "MarketplaceItem", "Cluster", "RateLimit",
     "ApiKey", "ApiKeyEvent", "Permission", "Session", "Team", "TeamInvitation", "TeamMembership",
     "UserLoginAudit", "OrgCustodian", "DomainCustodian", "NotificationChannelSetting", 
-    "BillingAccount", "Subscription", "Webhook", "Transform", "AttributeTransform", "BackgroundJob", "JobDependency", "AuditLogEnhanced", "AuditAction", "AuditSeverity",
+    "BillingAccount", "Subscription", "Webhook", "Transform", "AttributeTransform", "BackgroundJob", "JobDependency", "AuditLog", "AuditAction", "AuditSeverity",
     "MarketplaceDomain", "DomainSubscription", "DomainStats", "ApprovalRequest", "ApprovalAction", "ApprovalComment",
     "Tag", "ResourceTag", "TagCollection", "ValidationRule", "ValidationResult", "RuleExecution",
     # Phase 3 models

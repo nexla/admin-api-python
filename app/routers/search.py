@@ -192,8 +192,8 @@ async def advanced_search(
     resource_types: List[ResourceType] = [ResourceType.ALL],
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    sort_by: str = Query("updated_at", regex="^(name|created_at|updated_at|score)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("updated_at", pattern="^(name|created_at|updated_at|score)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

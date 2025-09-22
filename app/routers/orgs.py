@@ -569,7 +569,7 @@ async def update_org_cluster(
 @router.put("/{org_id}/rate-limits")
 async def manage_rate_limits(
     org_id: int,
-    action: str = Query(..., regex="^(activate|pause)$"),
+    action: str = Query(..., pattern="^(activate|pause)$"),
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)

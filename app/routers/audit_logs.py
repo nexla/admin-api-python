@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from app.database import get_db
 from app.auth import get_current_user
 from app.models.user import User
-from app.models.audit_log_enhanced import AuditLogEnhanced, AuditAction, AuditSeverity
+from app.models.audit_log import AuditLog, AuditAction, AuditSeverity
 
 router = APIRouter()
 
@@ -97,7 +97,7 @@ class AuditLogExportRequest(BaseModel):
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     batch_size: int = Field(default=10000, ge=1, le=50000)
-    format: str = Field(default="json", regex="^(json|csv)$")
+    format: str = Field(default="json", pattern="^(json|csv)$")
 
 # Audit log querying endpoints
 @router.get("/", response_model=List[AuditLogResponse])
@@ -118,47 +118,47 @@ async def list_audit_logs(
 ):
     """List audit logs with filtering options"""
     try:
-        query = db.query(AuditLogEnhanced)
+        query = db.query(AuditLog)
         
         # Filter by organization
-        query = query.filter(AuditLogEnhanced.org_id == current_user.default_org_id)
+        query = query.filter(AuditLog.org_id == current_user.default_org_id)
         
         # Apply filters
         if actions:
             action_list = [AuditAction(action.strip()) for action in actions.split(",")]
-            query = query.filter(AuditLogEnhanced.action.in_(action_list))
+            query = query.filter(AuditLog.action.in_(action_list))
         
         if auditable_type:
-            query = query.filter(AuditLogEnhanced.auditable_type == auditable_type)
+            query = query.filter(AuditLog.auditable_type == auditable_type)
         
         if user_id:
-            query = query.filter(AuditLogEnhanced.user_id == user_id)
+            query = query.filter(AuditLog.user_id == user_id)
         
         if severity:
-            query = query.filter(AuditLogEnhanced.severity == severity)
+            query = query.filter(AuditLog.severity == severity)
         
         if start_date:
-            query = query.filter(AuditLogEnhanced.created_at >= start_date)
+            query = query.filter(AuditLog.created_at >= start_date)
         
         if end_date:
-            query = query.filter(AuditLogEnhanced.created_at <= end_date)
+            query = query.filter(AuditLog.created_at <= end_date)
         
         if security_events_only:
             security_actions = [action for action in AuditAction if action.is_security_related]
-            query = query.filter(AuditLogEnhanced.action.in_(security_actions))
+            query = query.filter(AuditLog.action.in_(security_actions))
         
         if destructive_actions_only:
             destructive_actions = [action for action in AuditAction if action.is_destructive]
-            query = query.filter(AuditLogEnhanced.action.in_(destructive_actions))
+            query = query.filter(AuditLog.action.in_(destructive_actions))
         
         if with_errors_only:
             query = query.filter(
-                (AuditLogEnhanced.error_code.isnot(None)) | 
-                (AuditLogEnhanced.error_message.isnot(None))
+                (AuditLog.error_code.isnot(None)) | 
+                (AuditLog.error_message.isnot(None))
             )
         
         # Order by creation time (newest first)
-        query = query.order_by(AuditLogEnhanced.created_at.desc())
+        query = query.order_by(AuditLog.created_at.desc())
         
         # Apply pagination
         audit_logs = query.offset(offset).limit(limit).all()
@@ -181,64 +181,64 @@ async def search_audit_logs(
 ):
     """Advanced search for audit logs"""
     try:
-        query = db.query(AuditLogEnhanced)
+        query = db.query(AuditLog)
         
         # Filter by organization
-        query = query.filter(AuditLogEnhanced.org_id == current_user.default_org_id)
+        query = query.filter(AuditLog.org_id == current_user.default_org_id)
         
         # Apply search filters
         if search_request.actions:
-            query = query.filter(AuditLogEnhanced.action.in_(search_request.actions))
+            query = query.filter(AuditLog.action.in_(search_request.actions))
         
         if search_request.auditable_types:
-            query = query.filter(AuditLogEnhanced.auditable_type.in_(search_request.auditable_types))
+            query = query.filter(AuditLog.auditable_type.in_(search_request.auditable_types))
         
         if search_request.user_ids:
-            query = query.filter(AuditLogEnhanced.user_id.in_(search_request.user_ids))
+            query = query.filter(AuditLog.user_id.in_(search_request.user_ids))
         
         if search_request.severities:
-            query = query.filter(AuditLogEnhanced.severity.in_(search_request.severities))
+            query = query.filter(AuditLog.severity.in_(search_request.severities))
         
         if search_request.start_date:
-            query = query.filter(AuditLogEnhanced.created_at >= search_request.start_date)
+            query = query.filter(AuditLog.created_at >= search_request.start_date)
         
         if search_request.end_date:
-            query = query.filter(AuditLogEnhanced.created_at <= search_request.end_date)
+            query = query.filter(AuditLog.created_at <= search_request.end_date)
         
         if search_request.tags:
             # Filter by tags (JSON array contains any of the specified tags)
             for tag in search_request.tags:
-                query = query.filter(AuditLogEnhanced.tags.op('JSON_CONTAINS')(f'"{tag}"'))
+                query = query.filter(AuditLog.tags.op('JSON_CONTAINS')(f'"{tag}"'))
         
         if search_request.search_term:
             # Search in comment, endpoint, and metadata
             search_pattern = f"%{search_request.search_term}%"
             query = query.filter(
-                (AuditLogEnhanced.comment.like(search_pattern)) |
-                (AuditLogEnhanced.endpoint.like(search_pattern)) |
-                (AuditLogEnhanced.extra_metadata.op('JSON_SEARCH')('one', '$', search_pattern).isnot(None))
+                (AuditLog.comment.like(search_pattern)) |
+                (AuditLog.endpoint.like(search_pattern)) |
+                (AuditLog.extra_metadata.op('JSON_SEARCH')('one', '$', search_pattern).isnot(None))
             )
         
         if search_request.security_events_only:
             security_actions = [action for action in AuditAction if action.is_security_related]
-            query = query.filter(AuditLogEnhanced.action.in_(security_actions))
+            query = query.filter(AuditLog.action.in_(security_actions))
         
         if search_request.destructive_actions_only:
             destructive_actions = [action for action in AuditAction if action.is_destructive]
-            query = query.filter(AuditLogEnhanced.action.in_(destructive_actions))
+            query = query.filter(AuditLog.action.in_(destructive_actions))
         
         if search_request.with_errors_only:
             query = query.filter(
-                (AuditLogEnhanced.error_code.isnot(None)) | 
-                (AuditLogEnhanced.error_message.isnot(None))
+                (AuditLog.error_code.isnot(None)) | 
+                (AuditLog.error_message.isnot(None))
             )
         
         # Filter sensitive data based on permissions
         if not search_request.include_sensitive:
-            query = query.filter(AuditLogEnhanced.is_sensitive == False)
+            query = query.filter(AuditLog.is_sensitive == False)
         
         # Order by creation time (newest first)
-        query = query.order_by(AuditLogEnhanced.created_at.desc())
+        query = query.order_by(AuditLog.created_at.desc())
         
         # Apply pagination
         audit_logs = query.offset(offset).limit(limit).all()
@@ -259,9 +259,9 @@ async def get_audit_log(
     db: Session = Depends(get_db)
 ):
     """Get detailed information about a specific audit log"""
-    audit_log = db.query(AuditLogEnhanced).filter(
-        AuditLogEnhanced.id == audit_log_id,
-        AuditLogEnhanced.org_id == current_user.default_org_id
+    audit_log = db.query(AuditLog).filter(
+        AuditLog.id == audit_log_id,
+        AuditLog.org_id == current_user.default_org_id
     ).first()
     
     if not audit_log:
@@ -287,7 +287,7 @@ async def create_audit_log(
 ):
     """Create a new audit log entry"""
     try:
-        audit_log = AuditLogEnhanced.create_audit_log(
+        audit_log = AuditLog.create_audit_log(
             action=audit_data.action,
             auditable_type=audit_data.auditable_type,
             auditable_id=audit_data.auditable_id,
@@ -331,7 +331,7 @@ async def get_audit_stats(
 ):
     """Get audit log statistics summary"""
     try:
-        stats = AuditLogEnhanced.get_audit_statistics(
+        stats = AuditLog.get_audit_statistics(
             org_id=current_user.default_org_id,
             days=days
         )
@@ -353,15 +353,15 @@ async def get_action_stats(
     try:
         since = datetime.now() - timedelta(days=days)
         
-        query = db.query(AuditLogEnhanced).filter(
-            AuditLogEnhanced.org_id == current_user.default_org_id,
-            AuditLogEnhanced.created_at >= since
+        query = db.query(AuditLog).filter(
+            AuditLog.org_id == current_user.default_org_id,
+            AuditLog.created_at >= since
         )
         
         # Count by action
         action_counts = {}
         for action in AuditAction:
-            count = query.filter(AuditLogEnhanced.action == action).count()
+            count = query.filter(AuditLog.action == action).count()
             if count > 0:
                 action_counts[action.value] = count
         
@@ -387,16 +387,16 @@ async def get_user_stats(
         # Get top users by audit log count
         from sqlalchemy import func
         results = db.query(
-            AuditLogEnhanced.user_id,
-            func.count(AuditLogEnhanced.id).label('count')
+            AuditLog.user_id,
+            func.count(AuditLog.id).label('count')
         ).filter(
-            AuditLogEnhanced.org_id == current_user.default_org_id,
-            AuditLogEnhanced.created_at >= since,
-            AuditLogEnhanced.user_id.isnot(None)
+            AuditLog.org_id == current_user.default_org_id,
+            AuditLog.created_at >= since,
+            AuditLog.user_id.isnot(None)
         ).group_by(
-            AuditLogEnhanced.user_id
+            AuditLog.user_id
         ).order_by(
-            func.count(AuditLogEnhanced.id).desc()
+            func.count(AuditLog.id).desc()
         ).limit(limit).all()
         
         user_stats = {}
@@ -427,16 +427,16 @@ async def get_security_events(
         # Get security-related actions
         security_actions = [action for action in AuditAction if action.is_security_related]
         
-        query = db.query(AuditLogEnhanced).filter(
-            AuditLogEnhanced.org_id == current_user.default_org_id,
-            AuditLogEnhanced.action.in_(security_actions),
-            AuditLogEnhanced.created_at >= since
+        query = db.query(AuditLog).filter(
+            AuditLog.org_id == current_user.default_org_id,
+            AuditLog.action.in_(security_actions),
+            AuditLog.created_at >= since
         )
         
         if severity:
-            query = query.filter(AuditLogEnhanced.severity == severity)
+            query = query.filter(AuditLog.severity == severity)
         
-        query = query.order_by(AuditLogEnhanced.created_at.desc())
+        query = query.order_by(AuditLog.created_at.desc())
         audit_logs = query.offset(offset).limit(limit).all()
         
         return [AuditLogResponse(**log.to_dict()) for log in audit_logs]
@@ -458,13 +458,13 @@ async def get_resource_audit_trail(
 ):
     """Get audit trail for a specific resource"""
     try:
-        query = db.query(AuditLogEnhanced).filter(
-            AuditLogEnhanced.org_id == current_user.default_org_id,
-            AuditLogEnhanced.auditable_type == auditable_type,
-            AuditLogEnhanced.auditable_id == auditable_id
+        query = db.query(AuditLog).filter(
+            AuditLog.org_id == current_user.default_org_id,
+            AuditLog.auditable_type == auditable_type,
+            AuditLog.auditable_id == auditable_id
         )
         
-        query = query.order_by(AuditLogEnhanced.created_at.desc())
+        query = query.order_by(AuditLog.created_at.desc())
         audit_logs = query.offset(offset).limit(limit).all()
         
         return [AuditLogResponse(**log.to_dict()) for log in audit_logs]
@@ -484,23 +484,23 @@ async def export_audit_logs(
 ):
     """Export audit logs for compliance"""
     try:
-        query = db.query(AuditLogEnhanced).filter(
-            AuditLogEnhanced.org_id == current_user.default_org_id,
-            AuditLogEnhanced.is_exported == False
+        query = db.query(AuditLog).filter(
+            AuditLog.org_id == current_user.default_org_id,
+            AuditLog.is_exported == False
         )
         
         # Apply export filters
         if export_request.actions:
-            query = query.filter(AuditLogEnhanced.action.in_(export_request.actions))
+            query = query.filter(AuditLog.action.in_(export_request.actions))
         
         if export_request.start_date:
-            query = query.filter(AuditLogEnhanced.created_at >= export_request.start_date)
+            query = query.filter(AuditLog.created_at >= export_request.start_date)
         
         if export_request.end_date:
-            query = query.filter(AuditLogEnhanced.created_at <= export_request.end_date)
+            query = query.filter(AuditLog.created_at <= export_request.end_date)
         
         # Get logs to export
-        logs_to_export = query.order_by(AuditLogEnhanced.created_at).limit(export_request.batch_size).all()
+        logs_to_export = query.order_by(AuditLog.created_at).limit(export_request.batch_size).all()
         
         if not logs_to_export:
             return {
@@ -550,9 +550,9 @@ async def cleanup_expired_logs(
             )
         
         # Get expired logs for this organization
-        expired_logs = db.query(AuditLogEnhanced).filter(
-            AuditLogEnhanced.org_id == current_user.default_org_id,
-            AuditLogEnhanced.expires_at < datetime.now()
+        expired_logs = db.query(AuditLog).filter(
+            AuditLog.org_id == current_user.default_org_id,
+            AuditLog.expires_at < datetime.now()
         ).all()
         
         # Count logs to be deleted
@@ -601,9 +601,9 @@ async def extend_retention(
             detail="Only administrators can extend audit log retention"
         )
     
-    audit_log = db.query(AuditLogEnhanced).filter(
-        AuditLogEnhanced.id == audit_log_id,
-        AuditLogEnhanced.org_id == current_user.default_org_id
+    audit_log = db.query(AuditLog).filter(
+        AuditLog.id == audit_log_id,
+        AuditLog.org_id == current_user.default_org_id
     ).first()
     
     if not audit_log:

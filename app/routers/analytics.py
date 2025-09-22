@@ -130,7 +130,7 @@ class DashboardResponse(BaseModel):
 
 class AnalyticsReportCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
-    report_type: str = Field(..., regex="^(metric_summary|alert_summary|custom_query)$")
+    report_type: str = Field(..., pattern="^(metric_summary|alert_summary|custom_query)$")
     query: Optional[str] = None
     parameters: Optional[Dict[str, Any]] = {}
     schedule: Optional[Dict[str, Any]] = {}

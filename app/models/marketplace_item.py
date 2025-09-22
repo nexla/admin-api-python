@@ -12,6 +12,23 @@ class MarketplaceItemStatuses(PyEnum):
     ACTIVE = "active"
     DISCONTINUED = "discontinued"
 
+class ItemStatus(PyEnum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    PENDING_APPROVAL = "pending_approval"
+
+class ItemVisibility(PyEnum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    ORG_ONLY = "org_only"
+
+class ItemCategory(PyEnum):
+    DATASET = "dataset"
+    INTEGRATION = "integration"
+    TRANSFORM = "transform"
+    VALIDATOR = "validator"
+    CONNECTOR = "connector"
+
 class MarketplaceItem(Base):
     __tablename__ = "marketplace_items"
     

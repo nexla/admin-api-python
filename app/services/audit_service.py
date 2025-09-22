@@ -12,7 +12,7 @@ import json
 import asyncio
 
 from ..database import SessionLocal
-from ..models.audit_log import AuditLog, SecurityEvent, SystemLog
+from ..models.audit_log import AuditLog
 from ..models.user import User
 
 logger = logging.getLogger(__name__)
@@ -146,7 +146,7 @@ class AuditService:
             org_id: Organization context
         """
         try:
-            security_event = SecurityEvent(
+            security_event = AuditLog(
                 event_type=event_type,
                 severity=severity,
                 category=category,
@@ -239,7 +239,7 @@ class AuditService:
         try:
             db = SessionLocal()
             
-            system_log = SystemLog(
+            system_log = AuditLog(
                 level=level,
                 component=component,
                 message=message,
@@ -316,27 +316,27 @@ class AuditService:
         end_date: Optional[datetime] = None,
         limit: int = 100,
         offset: int = 0
-    ) -> List[SecurityEvent]:
+    ) -> List[AuditLog]:
         """Get filtered security events"""
         try:
-            query = db.query(SecurityEvent)
+            query = db.query(AuditLog)
             
             if severity:
-                query = query.filter(SecurityEvent.severity == severity)
+                query = query.filter(AuditLog.severity == severity)
             
             if category:
-                query = query.filter(SecurityEvent.category == category)
+                query = query.filter(AuditLog.category == category)
             
             if status:
-                query = query.filter(SecurityEvent.status == status)
+                query = query.filter(AuditLog.status == status)
             
             if start_date:
-                query = query.filter(SecurityEvent.created_at >= start_date)
+                query = query.filter(AuditLog.created_at >= start_date)
             
             if end_date:
-                query = query.filter(SecurityEvent.created_at <= end_date)
+                query = query.filter(AuditLog.created_at <= end_date)
             
-            return query.order_by(SecurityEvent.created_at.desc()).offset(offset).limit(limit).all()
+            return query.order_by(AuditLog.created_at.desc()).offset(offset).limit(limit).all()
             
         except Exception as e:
             logger.error(f"Failed to get security events: {str(e)}")
@@ -364,7 +364,7 @@ class AuditService:
         )
 
 
-class SecurityEventTypes:
+class AuditLogTypes:
     """Predefined security event types"""
     
     # Authentication events

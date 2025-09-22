@@ -153,8 +153,8 @@ class ProbeService:
     async def execute_query(
         self,
         data_source: DataSource,
-        credentials: Optional[DataCredentials] = None,
         query: str,
+        credentials: Optional[DataCredentials] = None,
         limit: int = 100
     ) -> Dict[str, Any]:
         """Execute a query against a data source"""

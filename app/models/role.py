@@ -39,7 +39,7 @@ class Role(Base):
     # users = relationship("User", secondary=user_roles, back_populates="roles")
 
 class Permission(Base):
-    __tablename__ = "permissions"
+    __tablename__ = "rbac_permissions"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), unique=True, nullable=False)

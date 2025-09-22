@@ -138,7 +138,7 @@ class DataSet(Base):
     origin_node_id = Column(Integer, ForeignKey("flow_nodes.id"), index=True)
     data_credentials_id = Column(Integer, ForeignKey("data_credentials.id"), index=True)
     code_container_id = Column(Integer, ForeignKey("code_containers.id"), index=True)
-    output_validator_id = Column(Integer, ForeignKey("validators.id"), index=True)
+    output_validator_id = Column(Integer, index=True)  # TODO: Add validators table
     copied_from_id = Column(Integer, ForeignKey("data_sets.id"), index=True)
     
     # Relationships

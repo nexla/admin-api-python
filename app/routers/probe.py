@@ -127,8 +127,8 @@ async def test_connection(
 @router.get("/data-source/{data_source_id}/test", response_model=ProbeResult)
 async def test_existing_data_source(
     data_source_id: int,
-    test_request: DataSourceProbeRequest = Depends(),
     background_tasks: BackgroundTasks,
+    test_request: DataSourceProbeRequest = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_permissions(["probe.test_data_source"]))
 ):

@@ -82,7 +82,7 @@ class AuthenticationTypes(PyEnum):
 
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "users_v2"
     
     # Primary attributes
     id = Column(Integer, primary_key=True, index=True)

@@ -21,8 +21,9 @@ from .routers import (
     data_sources, data_sinks, data_sets, flows,
     search, flow_management, metrics, data_schemas, invites,
     billing, custodians, notifications, alerts, api_keys, probe, transforms, background_jobs, audit_logs,
-    marketplace, tags, approval_requests, validators, catalog, analytics, security
+    marketplace, tags, approval_requests, validators, catalog, analytics
 )
+from .routers import security as security_router
 
 app = FastAPI(
     title="Admin API",
@@ -88,7 +89,7 @@ app.include_router(catalog.router, prefix="/api/v1/catalog", tags=["Data Catalog
 
 # Phase 3 Advanced API Endpoints
 app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics & Metrics"])
-app.include_router(security.router, prefix="/api/v1/security", tags=["Security & RBAC"])
+app.include_router(security_router.router, prefix="/api/v1/security", tags=["Security & RBAC"])
 
 @app.get("/")
 async def root():

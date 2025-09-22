@@ -48,7 +48,7 @@ class ApprovalRequestUpdate(BaseModel):
     assigned_approver_id: Optional[int] = None
 
 class ApprovalActionRequest(BaseModel):
-    action: str = Field(..., regex="^(approve|reject|escalate)$")
+    action: str = Field(..., pattern="^(approve|reject|escalate)$")
     comments: Optional[str] = None
     reason: Optional[str] = None
 

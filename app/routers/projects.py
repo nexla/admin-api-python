@@ -47,10 +47,10 @@ class ProjectUpdate(BaseModel):
 
 class TeamMemberAdd(BaseModel):
     user_id: int
-    role: str = Field(default="member", regex="^(admin|member|viewer)$")
+    role: str = Field(default="member", pattern="^(admin|member|viewer)$")
 
 class TeamMemberUpdate(BaseModel):
-    role: str = Field(..., regex="^(admin|member|viewer)$")
+    role: str = Field(..., pattern="^(admin|member|viewer)$")
 
 class ProjectResponse(BaseModel):
     id: int

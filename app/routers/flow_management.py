@@ -65,7 +65,7 @@ class FlowExecutionPlan(BaseModel):
 
 class BatchExecutionRequest(BaseModel):
     flow_ids: List[int]
-    execution_mode: str = Field("parallel", regex="^(parallel|sequential|dependency_aware)$")
+    execution_mode: str = Field("parallel", pattern="^(parallel|sequential|dependency_aware)$")
     max_concurrent: int = Field(5, ge=1, le=20)
     timeout_seconds: int = Field(3600, ge=60, le=86400)
     run_config: Optional[Dict[str, Any]] = None
@@ -243,7 +243,7 @@ async def get_flow_dependencies(
 async def create_flow_dependency(
     flow_id: int,
     upstream_flow_id: int,
-    dependency_type: str = Query("success", regex="^(success|completion|failure|conditional)$"),
+    dependency_type: str = Query("success", pattern="^(success|completion|failure|conditional)$"),
     condition: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -478,7 +478,7 @@ async def unschedule_flow(
 @router.get("/{flow_id}/lineage", response_model=Dict[str, Any])
 async def get_flow_lineage(
     flow_id: int,
-    direction: str = Query("both", regex="^(upstream|downstream|both)$"),
+    direction: str = Query("both", pattern="^(upstream|downstream|both)$"),
     max_depth: int = Query(5, ge=1, le=10),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -507,7 +507,7 @@ async def get_flow_lineage(
 @router.post("/{flow_id}/impact-analysis", response_model=Dict[str, Any])
 async def analyze_flow_impact(
     flow_id: int,
-    change_type: str = Query("config", regex="^(config|source|sink|transform|schedule)$"),
+    change_type: str = Query("config", pattern="^(config|source|sink|transform|schedule)$"),
     proposed_changes: Optional[Dict[str, Any]] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)

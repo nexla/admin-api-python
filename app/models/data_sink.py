@@ -134,7 +134,7 @@ class DataSink(Base):
     origin_node_id = Column(Integer, ForeignKey("flow_nodes.id"), index=True)
     data_map_id = Column(Integer, ForeignKey("data_maps.id"), index=True)
     data_source_id = Column(Integer, ForeignKey("data_sources.id"), index=True)
-    vendor_endpoint_id = Column(Integer, ForeignKey("vendor_endpoints.id"), index=True)
+    vendor_endpoint_id = Column(Integer, index=True)  # TODO: Add vendor_endpoints table
     code_container_id = Column(Integer, ForeignKey("code_containers.id"), index=True)
     copied_from_id = Column(Integer, ForeignKey("data_sinks.id"), index=True)
     

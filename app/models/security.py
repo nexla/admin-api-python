@@ -361,7 +361,7 @@ class SecurityIncident(Base):
     assignee = relationship("User", foreign_keys=[assigned_to])
 
 class DataClassification(Base):
-    __tablename__ = "data_classifications"
+    __tablename__ = "security_data_classifications"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)

@@ -73,7 +73,7 @@ class MetricValue(Base):
     definition = relationship("MetricDefinition", back_populates="metric_values")
 
 class AlertRule(Base):
-    __tablename__ = "alert_rules"
+    __tablename__ = "analytics_alert_rules"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
@@ -109,7 +109,7 @@ class AlertRule(Base):
     alert_instances = relationship("AlertInstance", back_populates="alert_rule")
 
 class AlertInstance(Base):
-    __tablename__ = "alert_instances"
+    __tablename__ = "analytics_alert_instances"
     
     id = Column(Integer, primary_key=True, index=True)
     status = Column(String(20), nullable=False, default=AlertStatus.ACTIVE)
@@ -141,7 +141,7 @@ class AlertInstance(Base):
     notifications = relationship("AlertNotification", back_populates="alert_instance")
 
 class AlertNotification(Base):
-    __tablename__ = "alert_notifications"
+    __tablename__ = "analytics_alert_notifications"
     
     id = Column(Integer, primary_key=True, index=True)
     channel = Column(String(50), nullable=False)
@@ -165,7 +165,7 @@ class AlertNotification(Base):
     alert_instance = relationship("AlertInstance", back_populates="notifications")
 
 class Dashboard(Base):
-    __tablename__ = "dashboards"
+    __tablename__ = "analytics_dashboards"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
@@ -195,7 +195,7 @@ class Dashboard(Base):
     dashboard_shares = relationship("DashboardShare", back_populates="dashboard")
 
 class DashboardShare(Base):
-    __tablename__ = "dashboard_shares"
+    __tablename__ = "analytics_dashboard_shares"
     
     id = Column(Integer, primary_key=True, index=True)
     permission_level = Column(String(20), nullable=False)

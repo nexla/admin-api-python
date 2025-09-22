@@ -360,7 +360,7 @@ class PipelineAlert(Base):
     creator = relationship("User")
 
 class DataLineage(Base):
-    __tablename__ = "data_lineage"
+    __tablename__ = "orchestration_data_lineage"
     
     id = Column(Integer, primary_key=True, index=True)
     

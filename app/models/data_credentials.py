@@ -94,7 +94,7 @@ class DataCredentials(Base):
     # Auth configuration
     auth_template_id = Column(Integer, ForeignKey("auth_templates.id"))
     vendor_id = Column(Integer, ForeignKey("vendors.id"))
-    users_api_key_id = Column(Integer, ForeignKey("users_api_keys.id"))
+    users_api_key_id = Column(Integer, ForeignKey("api_keys.id"))
     api_key_reference = Column(String(255))
     copied_from_id = Column(Integer, ForeignKey("data_credentials.id"))
     
@@ -111,7 +111,7 @@ class DataCredentials(Base):
     org = relationship("Org", back_populates="data_credentials")
     auth_template = relationship("AuthTemplate", foreign_keys=[auth_template_id])
     vendor = relationship("Vendor", foreign_keys=[vendor_id])
-    users_api_key = relationship("UsersApiKey", foreign_keys=[users_api_key_id])
+    users_api_key = relationship("ApiKey", foreign_keys=[users_api_key_id])
     copied_from = relationship("DataCredentials", remote_side=[id], foreign_keys=[copied_from_id])
     data_sources = relationship("DataSource", back_populates="data_credentials")
     data_sinks = relationship("DataSink", back_populates="data_credentials")

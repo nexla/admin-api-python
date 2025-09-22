@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
 from ...database import SessionLocal
-from ...models.async_task import AsyncTask, TaskStatus
+from ...models.async_task import AsyncTask, TaskStatuses
 from ...models.user import User
 from ...models.org import Org
 from ..storage.s3_service import S3Service
@@ -38,7 +38,7 @@ class AsyncTaskManager:
             # Find completed tasks with results that are expired
             expired_tasks = db.query(AsyncTask).filter(
                 and_(
-                    AsyncTask.status == TaskStatus.COMPLETED,
+                    AsyncTask.status == TaskStatuses.COMPLETED,
                     AsyncTask.stopped_at < expiry_cutoff,
                     AsyncTask.result_url.isnot(None),
                     AsyncTask.result_purged == False
@@ -125,14 +125,14 @@ class AsyncTaskManager:
                 and_(
                     AsyncTask.id == task_id,
                     AsyncTask.owner_id == user_id,
-                    AsyncTask.status.in_([TaskStatus.PENDING, TaskStatus.RUNNING])
+                    AsyncTask.status.in_([TaskStatuses.PENDING, TaskStatuses.RUNNING])
                 )
             ).first()
             
             if not task:
                 return False
             
-            task.status = TaskStatus.CANCELLED
+            task.status = TaskStatuses.CANCELLED
             task.stopped_at = datetime.utcnow()
             task.updated_at = datetime.utcnow()
             
@@ -150,7 +150,7 @@ class AsyncTaskManager:
     def get_user_tasks(
         db: Session,
         user_id: int,
-        status: Optional[TaskStatus] = None,
+        status: Optional[TaskStatuses] = None,
         task_type: Optional[str] = None,
         limit: int = 50,
         offset: int = 0
@@ -201,9 +201,9 @@ class AsyncTaskManager:
                 and_(
                     AsyncTask.created_at < cleanup_cutoff,
                     AsyncTask.status.in_([
-                        TaskStatus.COMPLETED,
-                        TaskStatus.FAILED,
-                        TaskStatus.CANCELLED
+                        TaskStatuses.COMPLETED,
+                        TaskStatuses.FAILED,
+                        TaskStatuses.CANCELLED
                     ])
                 )
             ).delete()
@@ -245,7 +245,7 @@ class AsyncTaskManager:
                 arguments=arguments,
                 owner_id=owner_id,
                 description=description or f"{task_type} task",
-                status=TaskStatus.PENDING,
+                status=TaskStatuses.PENDING,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
                 progress=0
@@ -310,7 +310,7 @@ class TaskRegistry:
             # Update task status to failed
             db = SessionLocal()
             try:
-                task.status = TaskStatus.FAILED
+                task.status = TaskStatuses.FAILED
                 task.error_message = str(e)
                 task.stopped_at = datetime.utcnow()
                 task.updated_at = datetime.utcnow()
@@ -362,7 +362,7 @@ class BaseAsyncTask:
         try:
             self.task.result = result
             self.task.result_url = result_url
-            self.task.status = TaskStatus.COMPLETED
+            self.task.status = TaskStatuses.COMPLETED
             self.task.stopped_at = datetime.utcnow()
             self.task.updated_at = datetime.utcnow()
             self.db.merge(self.task)

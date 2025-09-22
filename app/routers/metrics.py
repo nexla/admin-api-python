@@ -96,8 +96,8 @@ class AlertRule(BaseModel):
     description: str
     metric_name: str
     threshold: float
-    operator: str = Field(..., regex="^(gt|gte|lt|lte|eq|ne)$")
-    severity: str = Field(..., regex="^(low|medium|high|critical)$")
+    operator: str = Field(..., pattern="^(gt|gte|lt|lte|eq|ne)$")
+    severity: str = Field(..., pattern="^(low|medium|high|critical)$")
     enabled: bool
     notification_channels: List[str]
 
@@ -106,7 +106,7 @@ class AlertStatus(BaseModel):
     rule_id: str
     resource_type: str
     resource_id: int
-    status: str = Field(..., regex="^(firing|resolved|silenced)$")
+    status: str = Field(..., pattern="^(firing|resolved|silenced)$")
     current_value: float
     threshold: float
     severity: str
@@ -252,8 +252,8 @@ async def get_resource_type_metrics(
     resource_type: str,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    sort_by: str = Query("health_score", regex="^(name|status|health_score|last_updated)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("health_score", pattern="^(name|status|health_score|last_updated)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     status_filter: Optional[str] = Query(None),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -532,7 +532,7 @@ async def get_system_status(
 # Alerting endpoints
 @router.get("/alerts", response_model=List[AlertStatus])
 async def get_active_alerts(
-    severity: Optional[str] = Query(None, regex="^(low|medium|high|critical)$"),
+    severity: Optional[str] = Query(None, pattern="^(low|medium|high|critical)$"),
     resource_type: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),

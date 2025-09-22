@@ -71,7 +71,7 @@ class PermissionCheck(BaseModel):
 class SecurityRuleCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
-    rule_type: str = Field(..., regex="^(rate_limit|ip_whitelist|geo_restriction|threat_intelligence)$")
+    rule_type: str = Field(..., pattern="^(rate_limit|ip_whitelist|geo_restriction|threat_intelligence)$")
     conditions: Dict[str, Any]
     actions: List[str]
     threshold_value: Optional[int] = None
@@ -99,7 +99,7 @@ class SecurityIncidentCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
     description: str
     incident_type: str = Field(..., min_length=1, max_length=50)
-    severity: str = Field(..., regex="^(low|medium|high|critical)$")
+    severity: str = Field(..., pattern="^(low|medium|high|critical)$")
     affected_users: List[int] = []
     affected_resources: List[Dict[str, Any]] = []
 

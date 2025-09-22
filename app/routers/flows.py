@@ -109,7 +109,7 @@ class FlowScheduleUpdate(BaseModel):
         return v
 
 class FlowExecutionRequest(BaseModel):
-    priority: str = Field("medium", regex="^(low|medium|high|urgent)$")
+    priority: str = Field("medium", pattern="^(low|medium|high|urgent)$")
     parameters: Optional[Dict[str, Any]] = None
     timeout_seconds: Optional[int] = Field(None, ge=60, le=86400)
     retry_on_failure: bool = True
@@ -117,7 +117,7 @@ class FlowExecutionRequest(BaseModel):
 
 class FlowBulkAction(BaseModel):
     flow_ids: List[int]
-    action: str = Field(..., regex="^(start|stop|pause|resume|delete)$")
+    action: str = Field(..., pattern="^(start|stop|pause|resume|delete)$")
     force: bool = False
 
 class FlowMetricsResponse(BaseModel):
@@ -153,8 +153,8 @@ async def list_flows(
     flow_type: Optional[str] = Query(None),
     active_only: bool = Query(False),
     include_metrics: bool = Query(False),
-    sort_by: str = Query("updated_at", regex="^(name|created_at|updated_at|last_run_at|status)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("updated_at", pattern="^(name|created_at|updated_at|last_run_at|status)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -504,8 +504,8 @@ async def search_flows(
     search_params: FlowNodeSearch,
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
-    sort_by: str = Query("updated_at", regex="^(name|created_at|updated_at|last_run_at|status)$"),
-    sort_order: str = Query("desc", regex="^(asc|desc)$"),
+    sort_by: str = Query("updated_at", pattern="^(name|created_at|updated_at|last_run_at|status)$"),
+    sort_order: str = Query("desc", pattern="^(asc|desc)$"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -636,7 +636,7 @@ async def update_flow_schedule(
 @router.get("/{flow_id}/metrics", response_model=Dict[str, Any])
 async def get_flow_metrics(
     flow_id: int,
-    period: str = Query("24h", regex="^(1h|6h|24h|7d|30d)$"),
+    period: str = Query("24h", pattern="^(1h|6h|24h|7d|30d)$"),
     include_runs: bool = Query(True),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)

@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from app.database import get_db
 from app.auth import get_current_user
 from app.models.user import User
-from app.models.marketplace_item import MarketplaceItem, ItemStatus, ItemVisibility, ItemCategory
+from app.models.marketplace_item import MarketplaceItem, MarketplaceItemStatuses, ItemStatus, ItemVisibility, ItemCategory
 from app.models.marketplace_domain import MarketplaceDomain, DomainStatus, DomainVisibility, DomainSubscription, DomainStats
 
 router = APIRouter()
@@ -29,8 +29,8 @@ class DomainCreate(BaseModel):
     enable_ratings: bool = True
     logo_url: Optional[str] = None
     banner_url: Optional[str] = None
-    primary_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
-    secondary_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    primary_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
+    secondary_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     keywords: List[str] = Field(default_factory=list)
@@ -47,8 +47,8 @@ class DomainUpdate(BaseModel):
     enable_ratings: Optional[bool] = None
     logo_url: Optional[str] = None
     banner_url: Optional[str] = None
-    primary_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
-    secondary_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    primary_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
+    secondary_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     keywords: Optional[List[str]] = None

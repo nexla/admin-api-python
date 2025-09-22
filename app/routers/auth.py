@@ -82,12 +82,12 @@ class PasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8)
 
 class TwoFactorSetup(BaseModel):
-    method: str = Field("totp", regex="^(totp|sms)$")
+    method: str = Field("totp", pattern="^(totp|sms)$")
     phone_number: Optional[str] = None
 
 class TwoFactorVerify(BaseModel):
     code: str = Field(..., min_length=6, max_length=8)
-    method: str = Field("totp", regex="^(totp|sms)$")
+    method: str = Field("totp", pattern="^(totp|sms)$")
 
 class LoginAttempt(BaseModel):
     email: str
@@ -517,7 +517,7 @@ async def regenerate_backup_codes(
     if not current_user.has_2fa_enabled_():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=\"Two-factor authentication is not enabled"
+            detail="Two-factor authentication is not enabled"
         )
     
     backup_codes = current_user.regenerate_2fa_backup_codes_()
@@ -566,8 +566,8 @@ async def read_users_me(current_user: User = Depends(get_current_user)):
 
 @router.post("/logout")
 async def logout(
-    current_user: User = Depends(get_current_user),
     request: Request,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """Logout current user and invalidate session."""

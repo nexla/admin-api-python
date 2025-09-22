@@ -48,6 +48,26 @@ def require_permission(action: Action, resource_type: ResourceType):
     return permission_checker
 
 
+def require_permissions(*permissions):
+    """Create a dependency that requires multiple permissions (legacy compatibility)"""
+    def permission_checker(
+        ability: AbilityChecker = Depends(get_ability_checker)
+    ):
+        """Check if user has all required permissions"""
+        for permission in permissions:
+            if hasattr(permission, 'action') and hasattr(permission, 'resource_type'):
+                try:
+                    ability.authorize(permission.action, permission.resource_type)
+                except PermissionError as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=str(e)
+                    )
+        return True
+    
+    return permission_checker
+
+
 def can_read_resource(resource_type: ResourceType):
     """Dependency for read permission"""
     return require_permission(Action.READ, resource_type)

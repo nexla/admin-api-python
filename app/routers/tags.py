@@ -22,9 +22,9 @@ class TagCreate(BaseModel):
     description: Optional[str] = None
     tag_type: TagType = TagType.LABEL
     scope: TagScope = TagScope.GLOBAL
-    color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     icon: Optional[str] = None
-    background_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    background_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     parent_tag_id: Optional[int] = None
     project_id: Optional[int] = None
     domain_id: Optional[int] = None
@@ -34,9 +34,9 @@ class TagCreate(BaseModel):
 class TagUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
-    color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     icon: Optional[str] = None
-    background_color: Optional[str] = Field(None, regex="^#[0-9A-Fa-f]{6}$")
+    background_color: Optional[str] = Field(None, pattern="^#[0-9A-Fa-f]{6}$")
     is_active: Optional[bool] = None
     auto_apply_rules: Optional[Dict[str, Any]] = None
     metadata: Optional[Dict[str, Any]] = None
